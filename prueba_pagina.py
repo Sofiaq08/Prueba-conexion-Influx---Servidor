@@ -28,6 +28,7 @@ write_api = client.write_api(write_options=SYNCHRONOUS)
 # =====================================
 
 app = Dash(__name__)
+server = app.server
 
 app.layout = html.Div([
 
