@@ -27,6 +27,9 @@ write_api = client.write_api(write_options=SYNCHRONOUS)
 # PÁGINA WEB
 # =====================================
 
+print("La aplicación inició correctamente")
+
+
 app = Dash(__name__)
 server = app.server
 
