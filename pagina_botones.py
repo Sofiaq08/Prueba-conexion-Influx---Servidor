@@ -155,85 +155,101 @@ print("Aplicación HMI iniciando...")
 app = Dash(__name__)
 server = app.server
 
-app.layout = html.Div(
-    style={
-        "fontFamily": "Arial, sans-serif",
-        "maxWidth": "700px",
-        "margin": "40px auto",
-        "padding": "20px",
-        "backgroundColor": "#f9f9f9",
-        "borderRadius": "12px",
-        "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
-    },
-    children=[
+def serve_layout():
+    """
+    Se ejecuta CADA VEZ que se carga o recarga la página en el navegador
+    (a diferencia de un html.Div fijo, que solo se construye una vez al
+    iniciar el servidor). Así el layout siempre refleja el último estado
+    guardado en InfluxDB.
+    """
+    global estados
+    estados = leer_estados_desde_influx()
+    print(f"[Layout] Estados releídos al cargar la página: {estados}")
 
-        html.H1("Control Microrred", style={"textAlign": "center", "color": "#2c3e50"}),
-        html.P(
-            "Presiona un botón para cambiar su estado.",
-            style={"textAlign": "center", "color": "#777", "marginBottom": "30px"}
-        ),
+    return html.Div(
+        style={
+            "fontFamily": "Arial, sans-serif",
+            "maxWidth": "700px",
+            "margin": "40px auto",
+            "padding": "20px",
+            "backgroundColor": "#f9f9f9",
+            "borderRadius": "12px",
+            "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
+        },
+        children=[
 
-        # ── Fila de botones ──
-        html.Div(
-            style={"textAlign": "center"},
-            children=[
+            html.H1("Control Microrred", style={"textAlign": "center", "color": "#2c3e50"}),
+            html.P(
+                "Presiona un botón para cambiar su estado.",
+                style={"textAlign": "center", "color": "#777", "marginBottom": "30px"}
+            ),
 
-                # islaP
-                html.Div(style=ESTILO_TARJETA, children=[
-                    html.Button(
-                        id="btn-islaP",
-                        children=texto_boton("islaP", estados["islaP"]),
-                        n_clicks=0,
-                        style=estilo_boton(estados["islaP"])
-                    ),
-                    html.P(id="lbl-islaP", children=f"Estado: {estados['islaP']}", style=ESTILO_ETIQUETA),
-                ]),
+            # ── Fila de botones ──
+            html.Div(
+                style={"textAlign": "center"},
+                children=[
 
-                # piso1P
-                html.Div(style=ESTILO_TARJETA, children=[
-                    html.Button(
-                        id="btn-piso1P",
-                        children=texto_boton("piso1P", estados["piso1P"]),
-                        n_clicks=0,
-                        style=estilo_boton(estados["piso1P"])
-                    ),
-                    html.P(id="lbl-piso1P", children=f"Estado: {estados['piso1P']}", style=ESTILO_ETIQUETA),
-                ]),
+                    # islaP
+                    html.Div(style=ESTILO_TARJETA, children=[
+                        html.Button(
+                            id="btn-islaP",
+                            children=texto_boton("islaP", estados["islaP"]),
+                            n_clicks=0,
+                            style=estilo_boton(estados["islaP"])
+                        ),
+                        html.P(id="lbl-islaP", children=f"Estado: {estados['islaP']}", style=ESTILO_ETIQUETA),
+                    ]),
 
-                # piso2P
-                html.Div(style=ESTILO_TARJETA, children=[
-                    html.Button(
-                        id="btn-piso2P",
-                        children=texto_boton("piso2P", estados["piso2P"]),
-                        n_clicks=0,
-                        style=estilo_boton(estados["piso2P"])
-                    ),
-                    html.P(id="lbl-piso2P", children=f"Estado: {estados['piso2P']}", style=ESTILO_ETIQUETA),
-                ]),
+                    # piso1P
+                    html.Div(style=ESTILO_TARJETA, children=[
+                        html.Button(
+                            id="btn-piso1P",
+                            children=texto_boton("piso1P", estados["piso1P"]),
+                            n_clicks=0,
+                            style=estilo_boton(estados["piso1P"])
+                        ),
+                        html.P(id="lbl-piso1P", children=f"Estado: {estados['piso1P']}", style=ESTILO_ETIQUETA),
+                    ]),
 
-                # piso3P
-                html.Div(style=ESTILO_TARJETA, children=[
-                    html.Button(
-                        id="btn-piso3P",
-                        children=texto_boton("piso3P", estados["piso3P"]),
-                        n_clicks=0,
-                        style=estilo_boton(estados["piso3P"])
-                    ),
-                    html.P(id="lbl-piso3P", children=f"Estado: {estados['piso3P']}", style=ESTILO_ETIQUETA),
-                ]),
+                    # piso2P
+                    html.Div(style=ESTILO_TARJETA, children=[
+                        html.Button(
+                            id="btn-piso2P",
+                            children=texto_boton("piso2P", estados["piso2P"]),
+                            n_clicks=0,
+                            style=estilo_boton(estados["piso2P"])
+                        ),
+                        html.P(id="lbl-piso2P", children=f"Estado: {estados['piso2P']}", style=ESTILO_ETIQUETA),
+                    ]),
 
-            ]
-        ),
+                    # piso3P
+                    html.Div(style=ESTILO_TARJETA, children=[
+                        html.Button(
+                            id="btn-piso3P",
+                            children=texto_boton("piso3P", estados["piso3P"]),
+                            n_clicks=0,
+                            style=estilo_boton(estados["piso3P"])
+                        ),
+                        html.P(id="lbl-piso3P", children=f"Estado: {estados['piso3P']}", style=ESTILO_ETIQUETA),
+                    ]),
 
-        # ── Log de último evento ──
-        html.Hr(style={"marginTop": "30px"}),
-        html.P(
-            id="log",
-            children="Sin cambios aún.",
-            style={"textAlign": "center", "color": "#999", "fontStyle": "italic"}
-        ),
-    ]
-)
+                ]
+            ),
+
+            # ── Log de último evento ──
+            html.Hr(style={"marginTop": "30px"}),
+            html.P(
+                id="log",
+                children="Sin cambios aún.",
+                style={"textAlign": "center", "color": "#999", "fontStyle": "italic"}
+            ),
+        ]
+    )
+
+
+# IMPORTANTE: se asigna la FUNCIÓN (sin llamarla con "()"),
+# para que Dash la ejecute en cada request/recarga.
+app.layout = serve_layout
 
 
 # =====================================
