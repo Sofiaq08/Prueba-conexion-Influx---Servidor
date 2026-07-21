@@ -41,14 +41,15 @@ def leer_estados_desde_influx():
 
     query = '''
     from(bucket: "microgrid")
-      |> range(start: -30d)
-      |> filter(fn: (r) => r._measurement == "prueba")
-      |> filter(fn: (r) =>
+        |> range(start: -30d)
+        |> filter(fn: (r) => r._measurement == "prueba")
+        |> filter(fn: (r) =>
             r._field == "islaP"  or
             r._field == "piso1P" or
             r._field == "piso2P" or
             r._field == "piso3P")
-      |> last()
+        |> group(columns: ["_field"])
+        |> last()
     '''
 
     try:
@@ -123,9 +124,15 @@ def estilo_boton(estado):
 
 
 def texto_boton(nombre, estado):
-    """Devuelve el texto del botón con su estado actual."""
+    nombres_visual = {
+        "islaP":  "Isla",
+        "piso1P": "Piso 1",
+        "piso2P": "Piso 2",
+        "piso3P": "Piso 3",
+    }
     icono = "🟢" if estado == 1 else "⚫"
-    return f"{icono}  {nombre}"
+    etiqueta = nombres_visual.get(nombre, nombre)  # si no encuentra, usa el nombre original
+    return f"{icono}  {etiqueta}"
 
 
 def enviar_a_influx(campo, valor):
