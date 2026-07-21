@@ -1,4 +1,5 @@
-from dash import Dash, html, Input, Output, State, ctx
+import dash
+from dash import Dash, html, dcc, Input, Output, State, ctx
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 from datetime import datetime, timezone
@@ -243,6 +244,13 @@ def serve_layout():
                 children="Sin cambios aún.",
                 style={"textAlign": "center", "color": "#999", "fontStyle": "italic"}
             ),
+
+            # ── Timer: dispara una relectura periódica de InfluxDB ──
+            dcc.Interval(
+                id="intervalo-actualizacion",
+                interval=3000,  # cada 3000 ms = 3 segundos
+                n_intervals=0
+            ),
         ]
     )
 
@@ -276,23 +284,40 @@ app.layout = serve_layout
 
     Output("log", "children"),
 
-    # Entradas: clicks de cada botón
+    # Entradas: clicks de cada botón + tick del timer
     Input("btn-islaP",  "n_clicks"),
     Input("btn-piso1P", "n_clicks"),
     Input("btn-piso2P", "n_clicks"),
     Input("btn-piso3P", "n_clicks"),
+    Input("intervalo-actualizacion", "n_intervals"),
 
     prevent_initial_call=True
 )
-def manejar_botones(n_islaP, n_piso1P, n_piso2P, n_piso3P):
+def manejar_botones(n_islaP, n_piso1P, n_piso2P, n_piso3P, n_intervalos):
     """
-    Detecta cuál botón fue presionado, invierte su estado (0↔1),
-    escribe el nuevo valor en InfluxDB y actualiza la UI.
+    Se dispara por dos tipos de eventos:
+      1) Clic en un botón  -> invierte el estado y lo ESCRIBE en InfluxDB.
+      2) Tick del dcc.Interval -> solo LEE InfluxDB y refresca la vista,
+         para que los cambios hechos por otros usuarios se vean sin recargar.
     """
 
-    # Identificar el botón que disparó el callback
-    boton_activado = ctx.triggered_id  # e.g. "btn-islaP"
-    campo = boton_activado.replace("btn-", "")  # e.g. "islaP"
+    disparador = ctx.triggered_id  # "btn-islaP", "btn-piso1P", ... o "intervalo-actualizacion"
+
+    if disparador == "intervalo-actualizacion":
+        # Solo refrescar con lo último que haya en InfluxDB (sin escribir nada)
+        estados_actuales = leer_estados_desde_influx()
+        estados.update(estados_actuales)
+
+        return (
+            texto_boton("islaP",  estados["islaP"]),  estilo_boton(estados["islaP"]),  f"Estado: {estados['islaP']}",
+            texto_boton("piso1P", estados["piso1P"]), estilo_boton(estados["piso1P"]), f"Estado: {estados['piso1P']}",
+            texto_boton("piso2P", estados["piso2P"]), estilo_boton(estados["piso2P"]), f"Estado: {estados['piso2P']}",
+            texto_boton("piso3P", estados["piso3P"]), estilo_boton(estados["piso3P"]), f"Estado: {estados['piso3P']}",
+            dash.no_update,  # no tocar el log en un refresco automático
+        )
+
+    # --- A partir de aquí: fue un clic de botón ---
+    campo = disparador.replace("btn-", "")  # e.g. "islaP"
 
     # Invertir estado
     estados_actuales = leer_estados_desde_influx()
