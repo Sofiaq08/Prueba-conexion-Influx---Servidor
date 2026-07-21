@@ -279,7 +279,8 @@ def manejar_botones(n_islaP, n_piso1P, n_piso2P, n_piso3P):
     campo = boton_activado.replace("btn-", "")  # e.g. "islaP"
 
     # Invertir estado
-    estados[campo] = 1 - estados[campo]
+    estados_actuales = leer_estados_desde_influx()
+    estados[campo] = 1 - estados_actuales[campo]
     nuevo_valor = estados[campo]
 
     # Guardar en InfluxDB
